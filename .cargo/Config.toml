@@ -1,0 +1,49 @@
+[build]
+rustflags = [
+    # Side module to make clear that wasm-ld shouldn't expect a main.
+    # SIDE_MODULE=2 since not allowed to specify EXPORTED_FUNCTIONS with =1
+    # (which rustc automatically adds to the link command)
+    "-C", "link-args=-sSIDE_MODULE=2",
+
+    # Linker originally complained about missing -lc-debug or -lc. I thought this was an issue with the
+    # with the linker library paths not being adequately plumbed through and so I hardcoded it using the
+    # only emsdk directory I could find containing the relevant libraries.
+    #
+    # "-C", "link-args=-L..\\emsdk\\upstream\\emscripten\\cache\\sysroot\\lib\\wasm32-emscripten",
+    #
+    # However, the libraries found at the above path would fail [1] to link with complaints that relocations
+    # of type R_WASM_MEMORY_ADDR_LEB or R_WASM_MEMORY_ADDR_SLEB could not be used against various symbols
+    # and to recompile with -fPIC.
+    #
+    # In truth the toolchain did specify an appropriate library path (the `pic` subdirectory of the path
+    # mentioned above), the problem was actually that emsdk does not produce these libraries by default!
+    #
+    # They can be produced as follows:
+    #
+    #     emsdk\upstream\emscripten> python .\embuilder.py --pic build libc libc-debug
+    #
+    # Evidence of such libraries even existing was only observed through searches that turned up others'
+    # error listings which prompted me to dig around llvm and then the emscripten build scripts.
+    # I was preparing to rebuild the world (llvm, binaryen, et al.) from source before I fumbled around
+    # and thankfully found what I needed in embuilder.py. It was initially unclear to me which of the
+    # many scripts in the project's root directory was supposed to be any sort of entry point or what
+    # the result of running embuilder would even be, but in the end it seems to be exactly the tool for
+    # generating different variants of the emscripten target's library deps.
+    #
+    # This issue was largely bourne out of my unfamiliarity with the emscripten project, so perhaps this
+    # informs ways in which I could improve the documentation.
+    #
+    # Aside: By expanding libc-debug.a with `llvm-ar x <...>` and by inspecting __environ.o with
+    # `<emsdk>/upstream/bin/llvm-readobj --all dump/__environ.o`, one does indeed see the inappropriate relocations.
+    #
+    # Through some experimentations it seems that rather than R_WASM_MEMORY_ADDR_SLEB they want
+    # R_WASM_MEMORY_ADDR_REL_SLEB. Well, at least in some cases, in others the former was instead
+    # replaced by R_WASM_GLOBAL_INDEX_LEB. Maybe at some point I'll dig further to see what these
+    # relocations actually mean.
+    #
+
+    # Vestigial from when I briefly thought the issue might be the example code not being built with PIC
+    # "-C", "relocation-model=pic",
+]
+
+# [1] https://github.com/llvm/llvm-project/blob/148f083681f8142c7ff3e52a418178c7379237a8/lld/wasm/Relocations.cpp#LL158C19-L158C19

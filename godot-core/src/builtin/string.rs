@@ -12,7 +12,8 @@ use sys::{ffi_methods, interface_fn, GodotFfi};
 
 use super::{FromVariant, ToVariant, Variant, VariantConversionError};
 
-#[repr(C, align(8))]
+#[cfg_attr(target_pointer_width = "32", repr(C, align(4)))]
+#[cfg_attr(target_pointer_width = "64", repr(C, align(8)))]
 pub struct GodotString {
     opaque: OpaqueString,
 }

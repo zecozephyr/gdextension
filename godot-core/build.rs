@@ -13,5 +13,7 @@ fn main() {
         std::fs::remove_dir_all(gen_path).unwrap_or_else(|e| panic!("failed to delete dir: {e}"));
     }
 
-    godot_codegen::generate_core_files(gen_path);
+    let build_config = format!("float_{}", std::env::var("CARGO_CFG_TARGET_POINTER_WIDTH").unwrap());
+    println!("Selected build configuration: {build_config}");
+    godot_codegen::generate_core_files(gen_path, build_config.as_str());
 }

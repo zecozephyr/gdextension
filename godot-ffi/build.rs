@@ -16,7 +16,10 @@ fn main() {
     }
 
     run_bindgen(&gen_path.join("gdextension_interface.rs"));
-    godot_codegen::generate_sys_files(gen_path);
+
+    let build_config = format!("float_{}", std::env::var("CARGO_CFG_TARGET_POINTER_WIDTH").unwrap());
+    println!("Selected build configuration: {build_config}");
+    godot_codegen::generate_sys_files(gen_path, build_config.as_str());
 }
 
 fn run_bindgen(out_file: &Path) {
@@ -62,7 +65,11 @@ fn configure_platform_specific(builder: bindgen::Builder) -> bindgen::Builder {
             .clang_arg(format!("{path}/lib"))
     } else {
         eprintln!("Build selected for Linux/Windows.");
+        // XXX: toolchain was unable to find stddef.h or something so hardcode this just to make
+        // more progress
         builder
+            .clang_arg("-I")
+            .clang_arg("C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\Llvm\\lib\\clang\\15.0.1\\include\\")
     }
 }
 
