@@ -22,3 +22,4 @@ gen
 *.bat
 config.toml
 exp.rs
+export
