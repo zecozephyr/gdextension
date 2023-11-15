@@ -23,6 +23,9 @@ config/icon="res://icon.png"
 
 [debug]
 
+settings/stdout/print_fps=true
+settings/stdout/print_gpu_profile=true
+settings/stdout/verbose_stdout=true
 gdscript/warnings/redundant_await=false
 
 [display]

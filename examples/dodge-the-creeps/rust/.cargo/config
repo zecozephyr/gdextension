@@ -2,8 +2,29 @@
 # targets: https://github.com/rust-lang/cargo/issues/8733
 [target.wasm32-unknown-emscripten]
 rustflags = [
+    # Produce a dynamically linkable side module (2)
     "-C", "link-args=-sSIDE_MODULE=2",
+    # The godot engine makes use of emscripten pthreads
     "-C", "link-args=-sUSE_PTHREADS=1",
+    # needed for emscripten pthread support? (including applied to stdlib as well)
     "-C", "target-feature=+atomics,+bulk-memory,+mutable-globals",
+    # XXX: prevents memory access out of bounds somehow?
+    # I guess at the very least not including this exports a whole bunch of extra
+    # symbols, more than a few of which appear to already be accounted for in the
+    # export template such as `__emscripten_init_main_thread` and `__emscripten_environ_constructor`
+    # which also happen to give `__wasm_call_ctors` the purpose it lacked all this
+    # time.
+    # So probably only the main module should export these so why didn't SIDE_MODULE=2
+    # help here....
     "-Zlink-native-libraries=no",
+# for debug
+    "-C", "link-args=-g",
+    "-C", "link-args=-sASSERTIONS=2",
+    "-C", "link-args=-sSTACK_OVERFLOW_CHECK=1", #stack check lvl 2 broken and unsafe when only applied to one module
+    "-C", "link-args=-sDEMANGLE_SUPPORT=1",
+    # see: https://github.com/emscripten-core/emscripten/issues/12733#issuecomment-723690015
+    # "-C", "link-args=-sWASM_BIGINT=1",
+    # Doesn't actually work tho since we get mismatch in parameter count indicating that the main module
+    # is clearly not set up for bigint.
+    "-Zmacro-backtrace"
 ]
