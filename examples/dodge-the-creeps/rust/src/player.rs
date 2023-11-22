@@ -1,4 +1,5 @@
 use godot::engine::{AnimatedSprite2D, Area2D, CollisionShape2D, IArea2D, PhysicsBody2D};
+use godot::engine::{InputEvent, InputEventScreenDrag, Label};
 use godot::prelude::*;
 
 #[derive(GodotClass)]
@@ -6,6 +7,7 @@ use godot::prelude::*;
 pub struct Player {
     speed: real,
     screen_size: Vector2,
+    velocity: Vector2,
 
     #[base]
     base: Base<Area2D>,
@@ -47,6 +49,7 @@ impl IArea2D for Player {
         Player {
             speed: 400.0,
             screen_size: Vector2::new(0.0, 0.0),
+            velocity: Vector2::new(0.0, 0.0),
             base,
         }
     }
@@ -55,6 +58,8 @@ impl IArea2D for Player {
         let viewport = self.base.get_viewport_rect();
         self.screen_size = viewport.size;
         self.base.hide();
+        let mut input = Input::singleton();
+        input.set_use_accumulated_input(false);
     }
 
     fn process(&mut self, delta: f64) {
@@ -79,8 +84,12 @@ impl IArea2D for Player {
             velocity += Vector2::UP;
         }
 
-        if velocity.length() > 0.0 {
-            velocity = velocity.normalized() * self.speed;
+        if velocity.length() > 0.0 || self.velocity.length() > 0.0 {
+            if self.velocity.length() <= 0.0 {
+                velocity = velocity.normalized() * self.speed;
+            } else {
+                velocity = self.velocity;
+            }
 
             let animation;
 
@@ -107,5 +116,16 @@ impl IArea2D for Player {
             position.y.clamp(0.0, self.screen_size.y),
         );
         self.base.set_global_position(position);
+    }
+
+    fn input(&mut self, event: Gd<InputEvent>) {
+        if let Some(drag) = event.try_cast::<InputEventScreenDrag>() {
+            self.velocity = drag.get_velocity();
+            // let drag_pos = drag.position();
+            // let drag_velocity = drag.get_velocity();
+            // let mut message_label = self.base.get_node_as::<Label>("../Hud/MessageLabel");
+            // message_label.set_text(format!("pos {drag_pos:?}\nvel {drag_velocity:?}").into());
+            // message_label.show();
+        }
     }
 }

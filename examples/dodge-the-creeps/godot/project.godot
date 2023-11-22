@@ -81,6 +81,14 @@ start_game={
 ]
 }
 
+[input_devices]
+
+pointing/emulate_touch_from_mouse=true
+
+[physics]
+
+common/physics_ticks_per_second=144
+
 [rendering]
 
 renderer/rendering_method="mobile"

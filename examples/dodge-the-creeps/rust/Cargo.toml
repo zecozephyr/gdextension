@@ -9,5 +9,5 @@ publish = false
 crate-type = ["cdylib"]
 
 [dependencies]
-godot = { path = "../../../godot", default-features = false, features = ["experimental-wasm", "trace"] }
+godot = { path = "../../../godot", features = ["experimental-wasm", "trace"] }
 rand = "0.8"
