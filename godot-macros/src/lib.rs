@@ -595,6 +595,17 @@ pub fn gdextension(meta: TokenStream, input: TokenStream) -> TokenStream {
     )
 }
 
+#[proc_macro]
+pub fn wasm_init(_: TokenStream) -> TokenStream {
+    TokenStream::from(quote! {
+        #[cfg(target_family = "wasm")]
+        std::arch::global_asm!(r#"
+            .section .init_array.65535,"",@
+            .p2align 2, 0x0"#
+        );
+    })
+}
+
 // ----------------------------------------------------------------------------------------------------------------------------------------------
 
 type ParseResult<T> = Result<T, venial::Error>;

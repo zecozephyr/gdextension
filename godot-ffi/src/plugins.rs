@@ -42,7 +42,10 @@ macro_rules! plugin_add_inner_wasm {
         $crate::paste::paste! {
             #[no_mangle]
             extern "C" fn [< rust_gdext_registrant_ $gensym >] () {
-                __init();
+                let mut guard = $( $path_tt )* [< __godot_rust_plugin_ $registry >]
+                    .lock()
+                    .unwrap();
+                guard.push($plugin);
             }
         }
     };
@@ -86,6 +89,12 @@ macro_rules! plugin_add_inner {
             #[cfg(target_family = "wasm")]
             $crate::gensym! { $crate::plugin_add_inner_wasm!() }
         };
+
+        #[cfg(target_family = "wasm")]
+        std::arch::global_asm!(concat!(
+            r#".section .init_array.65535,"",@
+            .int32 rust_gdext_registrant_"#, stringify!($gensym)
+        ));
     };
 }
 

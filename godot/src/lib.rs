@@ -191,6 +191,7 @@ pub mod init {
 
     // Re-exports
     pub use godot_macros::gdextension;
+    pub use godot_macros::wasm_init;
 }
 
 /// Export user-defined classes and methods to be called by the engine.

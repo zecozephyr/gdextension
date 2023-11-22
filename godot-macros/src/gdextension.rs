@@ -39,11 +39,14 @@ pub fn attribute_gdextension(decl: Declaration) -> ParseResult<TokenStream> {
         // This cfg cannot be checked from the outer proc-macro since its 'target' is the build
         // host. See: https://github.com/rust-lang/rust/issues/42587
         #[cfg(target_os = "emscripten")]
-        fn emscripten_preregistration() {
+        fn emscripten_export_dyncalls() {
             // Module is documented here[1] by emscripten so perhaps we can consider it a part
             // of its public API? In any case for now we mutate global state directly in order
             // to get things working.
             // [1] https://emscripten.org/docs/api_reference/module.html
+            //
+            // In what context is this script even run? Is me.rtenv (or otherwise) a more
+            // appropriate name to call Module?
             //
             // Warning: It may be possible that in the process of executing the code leading up
             // to `emscripten_run_script` that we might trigger usage of one of the symbols we
@@ -55,23 +58,16 @@ pub fn attribute_gdextension(decl: Declaration) -> ParseResult<TokenStream> {
                 "var pkgName = '", env!("CARGO_PKG_NAME"), "';", r#"
                 var libName = pkgName.replaceAll('-', '_') + '.wasm';
                 var dso = LDSO.loadedLibsByName[libName]["module"];
-                var registrants = [];
                 for (sym in dso) {
                     if (sym.startsWith("dynCall_")) {
                         if (!(sym in Module)) {
                             console.log(`Patching Module with ${sym}`);
                             Module[sym] = dso[sym];
                         }
-                    } else if (sym.startsWith("rust_gdext_registrant_")) {
-                        registrants.push(sym);
                     }
                 }
-                for (sym of registrants) {
-                    console.log(`Running registrant ${sym}`);
-                    dso[sym]();
-                }
-                console.log("Added",  registrants.length, "plugins to registry!");
             "#)).expect("Unable to create CString from script");
+        }
 
             extern "C" { fn emscripten_run_script(script: *const std::ffi::c_char); }
             unsafe { emscripten_run_script(script.as_ptr()); }
@@ -83,9 +79,9 @@ pub fn attribute_gdextension(decl: Declaration) -> ParseResult<TokenStream> {
             library: ::godot::sys::GDExtensionClassLibraryPtr,
             init: *mut ::godot::sys::GDExtensionInitialization,
         ) -> ::godot::sys::GDExtensionBool {
-            // Required due to the lack of a constructor facility such as .init_array in rust wasm
+            // Required for some dynCall export symbols fixups.
             #[cfg(target_os = "emscripten")]
-            emscripten_preregistration();
+            emscripten_export_dyncalls();
 
             ::godot::init::__gdext_load_library::<#impl_ty>(
                 interface_or_get_proc_address,

@@ -4,6 +4,10 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
+// TODO: Yeah this isn't great.
+#![feature(asm_experimental_arch)]
+godot::init::wasm_init!();
+
 use godot::prelude::*;
 
 mod hud;

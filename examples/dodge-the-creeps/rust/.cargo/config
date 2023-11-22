@@ -2,6 +2,12 @@
 # targets: https://github.com/rust-lang/cargo/issues/8733
 [target.wasm32-unknown-emscripten]
 rustflags = [
+    # Any of the following three options are required due to sensitivity of the emitted
+    # .init_array sections to the number of codegen units in place.
+    "-Ccodegen-units=1",
+    # "--emit=asm",
+    # "--emit=llvm-ir",
+
     "-C", "link-args=-sSIDE_MODULE=2",
     "-C", "link-args=-sUSE_PTHREADS=1",
     "-C", "target-feature=+atomics,+bulk-memory,+mutable-globals",
